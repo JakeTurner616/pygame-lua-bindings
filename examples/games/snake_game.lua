@@ -6,6 +6,7 @@ local snake = {{x = 10, y = 10}}
 local food = {x = 15, y = 15}
 local direction = {x = 1, y = 0}
 local score = 0
+local input_locked = false  -- Lock for input processing
 
 -- Draw function
 local function draw_game()
@@ -27,6 +28,7 @@ end
 
 -- Event handling
 register_event_handler('on_keydown', function(event)
+    if input_locked then return end  -- Ignore inputs if locked
     local key_map = {
         [K_RIGHT] = {1, 0},   -- Right arrow
         [K_LEFT] = {-1, 0},  -- Left arrow
@@ -36,6 +38,7 @@ register_event_handler('on_keydown', function(event)
     local dir = key_map[event.key]
     if dir and (dir[1] ~= -direction.x and dir[2] ~= -direction.y) then
         direction = {x = dir[1], y = dir[2]}
+        input_locked = true  -- Lock input until next update
     end
 end)
 
@@ -76,6 +79,8 @@ function update_position()
     else
         table.remove(snake)
     end
+
+    input_locked = false  -- Unlock input after updating
 end
 
 -- Register functions and start the loop
