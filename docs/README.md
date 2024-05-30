@@ -4,6 +4,36 @@
 
 This project provides Lua bindings for Pygame. This project attempts to map the most useful pygame functions in lua, along with other useful utilities for graphics programming from within lua using pygame.
 
+## Demo
+
+Lua (using pygame to lua bindings):
+```lua
+clear_canvas()
+draw_text(50, 50, "Hello Pygame from lua!", "Arial", 30, 'red')
+```
+Python (using pygame):
+```python
+import pygame
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+font = pygame.font.SysFont('Arial', 30)
+red = (124, 0, 0)
+green = (0, 255, 0)
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    screen.fill((0, 0, 0))
+    screen.blit(font.render('Hello Pygame from python!', True, red), (50, 50))
+    pygame.display.flip()
+pygame.quit()
+```
+<div align="center">
+    <img src="hello_world_lua.PNG" alt="hello world in pygame with lua">
+</div>
+
+
 # Table of Contents
 
 ## Framework:
