@@ -361,6 +361,8 @@ Set whether the screensaver is allowed.
 ### Maps to:
 - `pygame.display.set_allow_screensaver(allow)`: This function sets whether the screensaver is allowed.
 
+# Drawing Functions
+
 ## draw_text(surface, x, y, text, font_name, font_size, hex_color)
 
 Draw text on the given surface at the specified coordinates.
