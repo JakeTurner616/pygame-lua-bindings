@@ -29,14 +29,5 @@ register_event_handler('on_mousemotion', function(event)
     print('Mouse motion event: pos=' .. event.pos[1] .. ',' .. event.pos[2] .. ' rel=' .. event.rel[1] .. ',' .. event.rel[2] .. ' buttons=' .. table.concat(event.buttons, ','))
 end)
 
--- Function to process events
-function process_events()
-    local events = get_events()
-    for i = 1, #events do
-        local event = events[i]
-        print('Event: type=' .. event.type)
-    end
-end
-
 -- Update display
 flip_display()
