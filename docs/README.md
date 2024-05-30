@@ -25,7 +25,7 @@ This project provides Lua bindings for Pygame. This project attempts to map the 
 
 ## Extra Utils:
 
-- [Pygame Utils](#pygame-utils)
+- [Pygame Utils](#misc-utils)
 
 # Color Functions
 
@@ -1091,7 +1091,7 @@ Compute the clock framerate.
 #### Returns:
 Frames per second.
 
-### Python to Lua Bindings Documentation for Pygame Utils
+### Misc Utils
 
 ## initialize_pygame()
 
