@@ -2,6 +2,7 @@ import pygame
 import sys
 import traceback
 from lupa import LuaRuntime
+from pygame_functions.color import (hex_to_rgb, color)
 from pygame_functions.soundarray import (sndarray_array, sndarray_samples, sndarray_make_sound, sndarray_use_arraytype, sndarray_get_arraytype, sndarray_get_arraytypes)
 from pygame_functions.version import (version, get_sdl_version)
 from pygame_functions.math import (clamp, lerp, Vector2, Vector3)
@@ -165,6 +166,7 @@ for key, value in EVENT_CONSTANTS.items():
 # Color functions
 lua.globals().color = color
 lua.globals().THECOLORS = THECOLORS
+lua.globals().hex_to_rgb = hex_to_rgb
 
 
 # Version functions
@@ -276,7 +278,7 @@ lua.globals().start_main_loop = start_main_loop
 lua.globals().stop_main_loop = stop_main_loop
 lua.globals().is_main_loop_running = is_main_loop_running
 
-run_lua_script("test_script.lua")
+run_lua_script("lua_scripts/test_script.lua")
 
 # Start the main loop
 main_loop()
