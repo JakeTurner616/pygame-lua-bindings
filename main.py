@@ -3,11 +3,12 @@ import sys
 import traceback
 from lupa import LuaRuntime
 from pygame_functions.color import (hex_to_rgb, color)
-from pygame_functions.soundarray import (sndarray_array, sndarray_samples, sndarray_make_sound, sndarray_use_arraytype, sndarray_get_arraytype, sndarray_get_arraytypes)
+from pygame_functions.soundarray import (sndarray_array, sndarray_samples, sndarray_make_sound)
 from pygame_functions.version import (version, get_sdl_version)
 from pygame_functions.math import (clamp, lerp, Vector2, Vector3)
 from pygame_functions.color import (color, THECOLORS)
 from pygame_functions.constants import (KEY_CONSTANTS, EVENT_CONSTANTS)
+from pygame_functions.mixer import (music_play, play_sound, music_load, music_unload, music_rewind, music_stop, music_pause, music_unpause, music_fadeout, music_set_volume, music_get_volume, music_get_busy, music_set_pos, music_get_pos, music_set_endevent, music_get_endevent)
 from pygame_functions.drawing import (
     draw_polygon, draw_text, draw_circle, draw_rectangle, clear_canvas
 )
@@ -26,7 +27,6 @@ from pygame_functions.events import (
     set_event_handling_active, pump_events, poll_event, wait_event,
     peek_event, clear_events, get_events, get_event
 )
-from pygame_functions.sounds import play_music
 from pygame_functions.display import flip_display
 
 # Initialize Lua
@@ -155,6 +155,24 @@ lua.globals().Vector3 = Vector3
 lua.globals().clamp = clamp
 lua.globals().lerp = lerp
 
+# Register the mixer functions in Lua
+lua.globals().music_load = music_load
+lua.globals().music_unload = music_unload
+lua.globals().music_rewind = music_rewind
+lua.globals().music_stop = music_stop
+lua.globals().music_pause = music_pause
+lua.globals().music_unpause = music_unpause
+lua.globals().music_fadeout = music_fadeout
+lua.globals().music_set_volume = music_set_volume
+lua.globals().music_get_volume = music_get_volume
+lua.globals().music_get_busy = music_get_busy
+lua.globals().music_set_pos = music_set_pos
+lua.globals().music_get_pos = music_get_pos
+lua.globals().music_set_endevent = music_set_endevent
+lua.globals().music_get_endevent = music_get_endevent
+lua.globals().play_sound = play_sound
+lua.globals().music_play = music_play
+
 # Register the constants in Lua
 for key, value in KEY_CONSTANTS.items():
     lua.globals()[key] = value
@@ -173,13 +191,10 @@ lua.globals().hex_to_rgb = hex_to_rgb
 lua.globals().version = version
 lua.globals().get_sdl_version = get_sdl_version
 
-# Sound functions
+# Soundarray functions
 lua.globals().sndarray_array = sndarray_array
 lua.globals().sndarray_samples = sndarray_samples
 lua.globals().sndarray_make_sound = sndarray_make_sound
-lua.globals().sndarray_use_arraytype = sndarray_use_arraytype
-lua.globals().sndarray_get_arraytype = sndarray_get_arraytype
-lua.globals().sndarray_get_arraytypes = sndarray_get_arraytypes
 
 # Event handler storage
 event_handlers = {}
