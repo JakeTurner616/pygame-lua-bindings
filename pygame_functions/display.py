@@ -1,5 +1,12 @@
 import pygame
 
+# Used as an override for the display surface to expose the screen object to lua. 
+# If not used, a default display surface is created for indirect use of the screen object.
+def set_display_mode_lua(width, height):
+    global screen
+    screen = pygame.display.set_mode((width, height))
+    return screen
+
 def init_display():
     pygame.display.init()
 
@@ -59,6 +66,15 @@ def toggle_fullscreen_display():
 
 def set_gamma_display(value):
     return pygame.display.set_gamma(value)
+
+def Surface(width, height, flags=0, depth=0, masks=None):
+    if depth not in [0, 8, 16, 24, 32]:
+        raise ValueError("Invalid bit depth provided")
+    
+    if masks is None:
+        return pygame.Surface((width, height), flags, depth)
+    else:
+        return pygame.Surface((width, height), flags, depth, masks)
 
 def set_gamma_ramp_display(r, g, b):
     pygame.display.set_gamma_ramp(r, g, b)

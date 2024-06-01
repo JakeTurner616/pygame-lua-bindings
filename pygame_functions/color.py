@@ -1,6 +1,5 @@
 import pygame
 
-
 def hex_to_rgb(hex_color):
     """
     Convert a hexadecimal color or common color name to an RGB tuple.

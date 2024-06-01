@@ -4,9 +4,6 @@ import pygame
 from lupa import LuaRuntime
 from pygame_functions.color import hex_to_rgb
 
-# Initialize Lua runtime with unpacking of returned tuples
-lua = LuaRuntime(unpack_returned_tuples=True)
-
 def draw_text(surface, x, y, text, font_name, font_size, hex_color):
     """
     Draw text on the given surface at the specified coordinates.

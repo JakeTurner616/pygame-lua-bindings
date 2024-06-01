@@ -1,7 +1,13 @@
 import pygame
 
+
 # Initialize mixer
-pygame.mixer.init()
+pygame.mixer.init(
+    frequency=22050,
+    size=-16,
+    channels=2,
+    buffer=512,
+    )
 
 # Wrapper functions for pygame.mixer.music methods
 def music_load(filename):

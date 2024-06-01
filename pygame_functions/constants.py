@@ -1,9 +1,6 @@
 import pygame
 from lupa import LuaRuntime
 
-# Initialize Lua
-lua = LuaRuntime(unpack_returned_tuples=True)
-
 # Pygame key and event constants
 KEY_CONSTANTS = {
     "K_BACKSPACE": pygame.K_BACKSPACE,

@@ -1,9 +1,6 @@
 import pygame
 from lupa import LuaRuntime
 
-# Initialize Lua
-lua = LuaRuntime(unpack_returned_tuples=True)
-
 # Font Module Functions
 def init_font_module():
     pygame.font.init()

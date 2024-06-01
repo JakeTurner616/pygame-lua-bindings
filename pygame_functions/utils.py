@@ -2,6 +2,11 @@ import pygame
 import sys
 from math import pi, sin, cos, tan, asin, acos, atan, atan2, exp, log, log10, pow, sqrt, ceil, floor, fabs
 
+
+def quit():
+    """Exit the program."""
+    pygame.quit()
+
 def initialize_pygame():
     try:
         pygame.display.init()
