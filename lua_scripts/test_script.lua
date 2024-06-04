@@ -20,10 +20,10 @@ local debug_mode = false -- Debug mode flag to show hitboxes
 
 -- Turret shooting directions
 local TURRET_DIRECTIONS = {
-    { dx = -1, dy = 0 }, -- left
-    { dx = 1,  dy = 0 }, -- right
+    { dx = -1, dy = 0 },  -- left
+    { dx = 1,  dy = 0 },  -- right
     { dx = 0,  dy = -1 }, -- up
-    { dx = 0,  dy = 1 } -- down
+    { dx = 0,  dy = 1 }   -- down
 }
 
 -- key: left 1, right 0, up 2, down 3 directions respectively
@@ -33,7 +33,7 @@ local turret_directions_list = { 0, 0, 2 }
 -- Player health variables
 local PLAYER_MAX_HEALTH = 100
 local PLAYER_DAMAGE_COOLDOWN = 0.5 -- Damage cooldown in seconds
-local player_damage_cooldown = 0 -- Timer to track damage cooldown
+local player_damage_cooldown = 0   -- Timer to track damage cooldown
 
 -- Load player sprites
 local player_sprites = {}
@@ -113,8 +113,10 @@ local met_hitbox_pixels_moving = load_hitbox_pixels("examples/games/data/megaman
 local met_hitbox_pixels_hiding = load_hitbox_pixels("examples/games/data/megaman/player_sprites/met_hitbox_hiding.png")
 
 -- Function to load the Met enemy sprites
-local met_sprites = {}
 local num_met_sprites = 7
+
+local met_sprites = {}
+local met_sprites_flipped = {}
 
 local function load_met_sprites()
     for i = 0, num_met_sprites - 1 do
@@ -122,11 +124,18 @@ local function load_met_sprites()
         if file_exists(sprite_path) then
             local sprite = load_image(sprite_path)
             table.insert(met_sprites, sprite)
+
+            -- Load the flipped sprite
+            local flipped_sprite_path = "examples/games/data/megaman/player_sprites/enemy_met_" .. i .. "_flipped.png"
+            if file_exists(flipped_sprite_path) then
+                local flipped_sprite = load_image(flipped_sprite_path)
+                table.insert(met_sprites_flipped, flipped_sprite)
+            end
         end
     end
 end
 
--- Function to load the level from a PNG file
+-- Add seen property to enemy initialization
 local function load_level_from_image(image_path)
     local image_data = get_image_data(image_path)
     local width, height = image_data.width, image_data.height
@@ -136,6 +145,7 @@ local function load_level_from_image(image_path)
         enemies = {},
         turrets = {},
         teleports = {},
+        flip_triggers = {},
         player_start = nil,
         width = width * 10, -- assuming each pixel represents a 10x10 block
         height = height * 10
@@ -149,6 +159,7 @@ local function load_level_from_image(image_path)
             if color.r == 0 and color.g == 0 and color.b == 0 then       -- Black
                 table.insert(level_data.platforms, { x = (x - 1) * 10, y = (y - 1) * 10, width = 10, height = 10 })
             elseif color.r == 255 and color.g == 0 and color.b == 0 then -- Red
+                local facing_left = true                                 -- Assuming they start facing left; adjust as necessary
                 table.insert(level_data.enemies, {
                     x = (x - 1) * 10,
                     y = (y - 1) * 10,
@@ -162,22 +173,29 @@ local function load_level_from_image(image_path)
                     hiding_timer = 0,
                     hitbox_pixels_moving = met_hitbox_pixels_moving,
                     hitbox_pixels_hiding = met_hitbox_pixels_hiding,
-                    hitbox_pixels = met_hitbox_pixels_moving                -- Initialize with moving hitbox
+                    hitbox_pixels = met_hitbox_pixels_moving,                     -- Initialize with moving hitbox
+                    facing_left = facing_left,                                    -- Track the direction the enemy is facing
+                    sprites = facing_left and met_sprites or met_sprites_flipped, -- Set initial sprites based on facing direction
+                    seen = false                                                  -- Initialize seen property to false
                 })
-            elseif color.r == 0 and color.g == 0 and color.b == 255 then    -- Blue
+            elseif color.r == 0 and color.g == 0 and color.b == 255 then          -- Blue
                 level_data.player_start = { x = (x - 1) * 10, y = (y - 1) * 10 }
-            elseif color.r == 0 and color.g == 255 and color.b == 0 then    -- Green
+            elseif color.r == 0 and color.g == 255 and color.b == 0 then          -- Green
                 table.insert(level_data.teleports, { x = (x - 1) * 10, y = (y - 1) * 10, width = 10, height = 10 })
-            elseif color.r == 255 and color.g == 255 and color.b == 0 then  -- Yellow
-                local direction = turret_directions_list[turret_index] or 0 -- Default to left if out of bounds
+            elseif color.r == 255 and color.g == 255 and color.b == 0 then        -- Yellow
+                local direction = turret_directions_list[turret_index] or 0       -- Default to left if out of bounds
                 table.insert(level_data.turrets,
                     { x = (x - 1) * 10, y = (y - 1) * 10, width = 10, height = 10, shoot_timer = 0, direction = direction })
                 turret_index = turret_index + 1
+            elseif color.r == 255 and color.g == 0 and color.b == 255 then -- Pink
+                table.insert(level_data.flip_triggers, { x = (x - 1) * 10, y = (y - 1) * 10, width = 10, height = 10 })
             end
         end
     end
     return level_data
 end
+
+
 
 -- Function to load the background decoration
 local function load_deco_image(image_path)
@@ -212,7 +230,7 @@ local player = {
     shooting_timer = 0,
     shooting_interval = 0.1,
     hitbox_pixels = running_hitbox_pixels, -- Initialize with running hitbox
-    health = PLAYER_MAX_HEALTH -- Add health to player structure
+    health = PLAYER_MAX_HEALTH             -- Add health to player structure
 }
 
 local keys = { left = false, right = false, space = false, up = false }
@@ -234,7 +252,7 @@ local function draw_health_bar()
     local health_ratio = player.health / PLAYER_MAX_HEALTH
     local health_bar_width = bar_width * health_ratio
 
-    draw_rectangle(10, 10, bar_width, bar_height, "#000000") -- Draw black background
+    draw_rectangle(10, 10, bar_width, bar_height, "#000000")        -- Draw black background
     draw_rectangle(10, 10, health_bar_width, bar_height, "#FF0000") -- Draw red health bar
 end
 
@@ -247,10 +265,10 @@ local function apply_damage(damage, knockback_direction)
         else
             -- Apply horizontal knockback force
             player.dx = knockback_direction
-            
+
             -- Apply vertical knockback force
             player.dy = -PLAYER_JUMP_SPEED * 0.5 -- Adjust this multiplier for vertical knockback if needed
-            
+
             -- Set damage cooldown
             player_damage_cooldown = PLAYER_DAMAGE_COOLDOWN
         end
@@ -300,8 +318,15 @@ local function spawn_turret_bullets(turret, bullet_width, bullet_height)
         local dx = TURRET_BULLET_SPEED * math.cos(angle)
         local dy = TURRET_BULLET_SPEED * math.sin(angle)
         table.insert(turret_bullets,
-            { x = turret.x + turret.width / 2, y = turret.y + turret.height / 2, dx = dx, dy = dy, width = bullet_width, height =
-            bullet_height })
+            {
+                x = turret.x + turret.width / 2,
+                y = turret.y + turret.height / 2,
+                dx = dx,
+                dy = dy,
+                width = bullet_width,
+                height =
+                    bullet_height
+            })
     end
 end
 
@@ -375,7 +400,8 @@ local function draw_game()
     for _, enemy in ipairs(enemies) do
         if enemy.type == "met" then
             if enemy.x - scroll_x + enemy.width > 0 and enemy.x - scroll_x < SCREEN_WIDTH then
-                draw_image(met_sprites[enemy.current_frame], enemy.x - scroll_x, enemy.y - 4) -- Offset the Met sprite by 4 pixels to align with the ground
+                local sprite_set = enemy.facing_left and met_sprites or met_sprites_flipped
+                draw_image(sprite_set[enemy.current_frame], enemy.x - scroll_x, enemy.y - 4) -- Offset the Met sprite by 4 pixels to align with the ground
             end
         else
             if enemy.x - scroll_x + enemy.width > 0 and enemy.x - scroll_x < SCREEN_WIDTH then
@@ -383,6 +409,7 @@ local function draw_game()
             end
         end
     end
+
 
     -- Draw turrets as yellow rectangles
     for _, turret in ipairs(turrets) do
@@ -429,7 +456,7 @@ register_event_handler('on_keydown', function(event)
         keys.space = true
         player.shooting = true
         local bullet_x = player.facing_left and (player.x - .5) or
-        (player.x + player.width + .5)                                                            -- Offset bullet to the side of the X-buster
+            (player.x + player.width + .5) -- Offset bullet to the side of the X-buster
         local bullet_dx = player.facing_left and -BULLET_SPEED or BULLET_SPEED
         table.insert(bullets, { x = bullet_x, y = player.y + player.height / 2, width = 4, height = 10, dx = bullet_dx })
     elseif event.key == K_UP then
@@ -572,33 +599,46 @@ function update_position()
         -- make the player take damage if they hit the bullet
         if check_player_hitbox_collision(player, bullet) then
             apply_damage(25, player.facing_left and 1 or -1) -- Apply 25 damage and knockback
-            table.remove(bullets, i) -- Remove the bullet after collision
+            table.remove(bullets, i)                         -- Remove the bullet after collision
         end
     end
 
     -- Update enemies
     for i = #enemies, 1, -1 do
         local enemy = enemies[i]
+        local enemy_visible = enemy.x - scroll_x + enemy.width > 0 and enemy.x - scroll_x < SCREEN_WIDTH
+
+        if enemy_visible then
+            enemy.seen = true
+        end
+
         if enemy.type == "met" then
-            enemy.frame_timer = enemy.frame_timer + 1 / 60 -- Assuming 60 FPS
-            if enemy.hiding then
-                enemy.hiding_timer = enemy.hiding_timer + 1 / 60
-                enemy.hitbox_pixels = enemy.hitbox_pixels_hiding -- Use hiding hitbox
-                if enemy.hiding_timer >= 1 then                  -- Stay hidden for 1 second
-                    enemy.hiding = false
-                    enemy.hiding_timer = 0
-                    enemy.current_frame = 1                          -- Reset to the first frame when coming out of hiding
-                    enemy.hitbox_pixels = enemy.hitbox_pixels_moving -- Switch to moving hitbox
-                end
-            else
-                enemy.x = enemy.x - ENEMY_SPEED
-                if enemy.frame_timer >= enemy.frame_interval then
-                    enemy.frame_timer = 0
-                    enemy.current_frame = enemy.current_frame + 1
-                    if enemy.current_frame >= num_met_sprites then
-                        enemy.hiding = true
-                        enemy.current_frame = 7                          -- Freeze on frame 7 when hiding
-                        enemy.hitbox_pixels = enemy.hitbox_pixels_hiding -- Switch to hiding hitbox
+            if enemy.seen then
+                enemy.frame_timer = enemy.frame_timer + 1 / 62
+                if enemy.hiding then
+                    enemy.hiding_timer = enemy.hiding_timer + 1 / 62
+                    enemy.hitbox_pixels = enemy.hitbox_pixels_hiding -- Use hiding hitbox
+                    if enemy.hiding_timer >= 1 then                  -- Stay hidden for 1 second
+                        enemy.hiding = false
+                        enemy.hiding_timer = 0
+                        enemy.current_frame = 1                          -- Reset to the first frame when coming out of hiding
+                        enemy.hitbox_pixels = enemy.hitbox_pixels_moving -- Switch to moving hitbox
+                    end
+                else
+                    if enemy.facing_left then
+                        enemy.x = enemy.x - ENEMY_SPEED
+                    else
+                        enemy.x = enemy.x + ENEMY_SPEED
+                    end
+
+                    if enemy.frame_timer >= enemy.frame_interval then
+                        enemy.frame_timer = 0
+                        enemy.current_frame = enemy.current_frame + 1
+                        if enemy.current_frame >= num_met_sprites then
+                            enemy.hiding = true
+                            enemy.current_frame = 7                          -- Freeze on frame 7 when hiding
+                            enemy.hitbox_pixels = enemy.hitbox_pixels_hiding -- Switch to hiding hitbox
+                        end
                     end
                 end
             end
@@ -607,13 +647,30 @@ function update_position()
                 apply_damage(10, player.facing_left and 1 or -1) -- Apply 10 damage and knockback
             end
         else
-            enemy.x = enemy.x - ENEMY_SPEED
-            if enemy.x + enemy.width < scroll_x then
-                table.remove(enemies, i)
+            if enemy.seen then
+                if enemy.facing_left then
+                    enemy.x = enemy.x - ENEMY_SPEED
+                else
+                    enemy.x = enemy.x + ENEMY_SPEED
+                end
+
+                if enemy.x + enemy.width < scroll_x then
+                    table.remove(enemies, i)
+                end
+                -- Collision with player using hitbox
+                if check_player_hitbox_collision(player, enemy) then
+                    apply_damage(10, player.facing_left and 1 or -1) -- Apply 10 damage and knockback
+                end
             end
-            -- Collision with player using hitbox
-            if check_player_hitbox_collision(player, enemy) then
-                apply_damage(10, player.facing_left and 1 or -1) -- Apply 10 damage and knockback
+        end
+
+        -- Check for flip trigger collision
+        for _, flip_trigger in ipairs(level_data.flip_triggers) do
+            if check_collision(enemy, flip_trigger) then
+                enemy.facing_left = not enemy.facing_left                                -- Flip the enemy direction
+                enemy.sprites = enemy.facing_left and met_sprites or
+                met_sprites_flipped                                                      -- Switch sprites based on direction
+                break
             end
         end
     end
@@ -639,7 +696,7 @@ function update_position()
         -- Collision with player using hitbox
         if check_player_hitbox_collision(player, bullet) then
             apply_damage(25, player.facing_left and 1 or -1) -- Apply 5 damage and knockback
-            table.remove(turret_bullets, i) -- Remove the bullet after collision
+            table.remove(turret_bullets, i)                  -- Remove the bullet after collision
         end
     end
 

@@ -35,3 +35,4 @@ def get_extended():
     except Exception as e:
         print(f"Error getting extended image: {e}")
         return None
+
