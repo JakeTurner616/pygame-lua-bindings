@@ -3,6 +3,7 @@ import pygame
 import sys
 import traceback
 from lupa import LuaRuntime
+from pygame_functions.pillow import (load_image_from_pil, get_pixel_color, get_image_data)
 from pygame_functions.networking import (http_get, create_socket, connect_socket, send_socket, receive_socket)
 from pygame_functions.surface import ( create_surface, surface_blit, surface_blits, surface_convert, surface_convert_alpha, surface_copy, surface_fill, surface_scroll, surface_set_colorkey, surface_get_colorkey, surface_set_alpha, surface_get_alpha, surface_lock, surface_unlock, surface_get_at, surface_set_at, surface_subsurface, surface_get_size, surface_get_width, surface_get_height, surface_get_rect)
 from pygame_functions.transform import (flip, scale, scale_by, rotate, rotozoom, scale2x, smoothscale, smoothscale_by, chop, laplacian, average_color, grayscale, threshold)
@@ -26,9 +27,9 @@ from pygame_functions.keys import (
     start_text_input, stop_text_input, set_text_input_rect
 )
 from pygame_functions.font import (init_font_module, quit_font_module, is_font_initialized, get_default_font, get_fonts, match_font, create_sys_font, create_font)
-from pygame_functions.images import (load_image, draw_image, save_image)
+from pygame_functions.images import (load_image, draw_image, save_image, get_extended)
 from pygame_functions.time import (get_ticks, wait, delay, set_timer, Clock)
-from pygame_functions.utils import (
+from pygame_functions.utils import ( get_error, 
     quit, initialize_pygame, get_pi, get_acos, get_asin, get_atan, get_atan2, get_cos, get_sin,
     get_tan, get_exp, get_log, get_log10, get_pow, get_sqrt, get_ceil, get_floor, get_fabs
 )
@@ -50,10 +51,20 @@ def set_env_variables():
 set_env_variables()
 
 
+# Determine the correct extension for shared libraries based on the OS
+if sys.platform.startswith('win'):
+    ext = 'dll'
+else:
+    ext = 'so'
+
+# Set the Lua search path and C library path
+
+lua.execute(f'package.cpath = package.cpath .. ";./lua_modules/?.{ext}"')
+
 
 # Initialize Pygame
 initialize_pygame()
-screen = pygame.display.set_mode((800, 600)) #this needs to be called from lua instead of right here maybe we can create an override for use in lua to override this so we can have access to the screen object in lua
+screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Pygame Lua Integration")
 
 # Register functions from Lua
@@ -97,6 +108,11 @@ def get_events_as_lua():
 lua.globals().get_events = get_events_as_lua
 lua.globals().get_event = get_event
 
+#Wrapper function to expose Python pillow functions to Lua
+lua.globals().load_image_from_pil = load_image_from_pil
+lua.globals().get_pixel_color = get_pixel_color
+lua.globals().get_image_data = get_image_data
+
 #Wrapper functions to expose Python midi functions to Lua
 lua.globals().midi_init = midi_init
 lua.globals().midi_quit = midi_quit
@@ -125,8 +141,9 @@ lua.globals().connect_socket = connect_socket
 lua.globals().send_socket = send_socket
 lua.globals().receive_socket = receive_socket
 
-# Wrapper functions to expose Python functions to Lua
+# Wrapper functions to expose utils functions to Lua
 lua.globals().quit = quit
+lua.globals().get_error = get_error
 lua.globals().initialize_pygame = initialize_pygame
 lua.globals().get_pi = get_pi
 lua.globals().get_sin = get_sin
@@ -239,6 +256,7 @@ lua.globals().surface_get_height = surface_get_height
 lua.globals().surface_get_rect = surface_get_rect
 
 # Pygame image functions bindings
+lua.globals().get_extended = get_extended
 lua.globals().load_image = load_image
 lua.globals().draw_image = lambda image, x, y: draw_image(screen, image, x, y)
 lua.globals().save_image = save_image
@@ -413,6 +431,7 @@ def main_loop():
     set_event_handling_active(True)
     clock = pygame.time.Clock()
     while main_loop_running:
+        
         handle_events()
         if registered_functions["process_events"]:
             registered_functions["process_events"]()
@@ -421,8 +440,8 @@ def main_loop():
         if registered_functions["draw"]:
             registered_functions["draw"]()
         flip_display()
-        # Cap the frame rate to 12 fps
-        clock.tick(14)
+        # Cap the frame rate to 14 fps
+        clock.tick(30)
 
     pygame.quit()
     sys.exit()

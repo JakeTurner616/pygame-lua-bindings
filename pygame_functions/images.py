@@ -26,3 +26,12 @@ def save_image(image, image_path):
         print(f"Image saved to {image_path}")
     except Exception as e:
         print(f"Error saving image: {e}")
+
+def get_extended():
+    """test if extended image formats can be loaded returns true or false
+    """
+    try:
+        return pygame.image.get_extended()
+    except Exception as e:
+        print(f"Error getting extended image: {e}")
+        return None

@@ -32,9 +32,6 @@ class SpriteWrapper:
     def groups(self):
         return self.sprite.groups()
 
-
-
-
     def set_image(self, width, height, color):
         if is_lua_table(color):
             # Convert Lua table to a Python dictionary or list
@@ -46,6 +43,11 @@ class SpriteWrapper:
         else:
             # Assume color is already a tuple or a list
             color = tuple(color)
+        
+        # Create the surface and fill it with the color
+        self.sprite.image = pygame.Surface((width, height))
+        self.sprite.image.fill(color)
+        self.sprite.rect = self.sprite.image.get_rect()
 
     def get_rect(self):
         if self.sprite.rect is None:

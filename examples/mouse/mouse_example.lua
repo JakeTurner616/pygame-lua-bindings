@@ -1,7 +1,6 @@
 
 -- Initialize the counter
 local counter = 0
-local circle_x, circle_y = 300, 300
 
 -- Get the state of the mouse buttons
 function check_mouse_buttons()

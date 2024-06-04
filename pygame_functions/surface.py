@@ -1,7 +1,6 @@
 import pygame
 
 # Helper functions to wrap Pygame Surface methods
-# Helper functions to wrap Pygame Surface methods
 def create_surface(width, height, flags=0, depth=0):
     surface = pygame.Surface((width, height), flags) if depth == 0 else pygame.Surface((width, height), flags, depth)
     print(f"Created surface with size: ({width}, {height})")
