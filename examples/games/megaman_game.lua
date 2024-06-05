@@ -32,7 +32,7 @@ end
 local function load_player_sprites()
     local i = 1
     while true do
-        local sprite_path = "player_sprites/run" .. i .. ".png"
+        local sprite_path = "examples/games/data/megaman/player_sprites/run" .. i .. ".png"
         if file_exists(sprite_path) then
             local sprite = load_image(sprite_path)
             table.insert(player_sprites, sprite)
@@ -45,7 +45,7 @@ local function load_player_sprites()
 
     i = 1
     while true do
-        local sprite_path = "player_sprites/shoot" .. i .. ".png"
+        local sprite_path = "examples/games/data/megaman/player_sprites/shoot" .. i .. ".png"
         if file_exists(sprite_path) then
             local sprite = load_image(sprite_path)
             table.insert(shooting_sprites, sprite)
@@ -56,12 +56,12 @@ local function load_player_sprites()
     end
     num_shooting_sprites = #shooting_sprites
 
-    local falling_sprite_path = "player_sprites/fall.png"
+    local falling_sprite_path = "examples/games/data/megaman/player_sprites/fall.png"
     if file_exists(falling_sprite_path) then
         falling_sprite = load_image(falling_sprite_path)
     end
 
-    local falling_shooting_sprite_path = "player_sprites/fall_shoot.png"
+    local falling_shooting_sprite_path = "examples/games/data/megaman/player_sprites/fall_shoot.png"
     if file_exists(falling_shooting_sprite_path) then
         falling_shooting_sprite = load_image(falling_shooting_sprite_path)
     end
@@ -103,8 +103,8 @@ end
 
 -- Function to load a level and its decoration
 local function load_level(scene)
-    level_data = load_level_from_image("level" .. scene .. ".png")
-    deco_image = load_deco_image("level" .. scene .. "_deco.png")
+    level_data = load_level_from_image("examples/games/data/megaman/levels/level" .. scene .. ".png")
+    deco_image = load_deco_image("examples/games/data/megaman/levels/level" .. scene .. "_deco.png")
 end
 
 -- Initialize game state for the first scene
