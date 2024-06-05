@@ -16,7 +16,7 @@ local TURRET_BULLET_SPEED = 5
 local current_scene = 0
 local level_data
 local deco_image
-local debug_mode = true -- Debug mode flag to show hitboxes
+local debug_mode = false -- Debug mode flag to show hitboxes
 
 -- Turret shooting directions
 local TURRET_DIRECTIONS = {
