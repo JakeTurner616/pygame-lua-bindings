@@ -34,6 +34,8 @@ while running:
     pygame.display.flip()
 pygame.quit()
 ```
+More in depth examples can be found on the [wiki](https://github.com/JakeTurner616/pygame-lua-bindings/wiki).
+
 ## Main loop handling from within lua
 Assumes the use of high-level abstractions to register event handlers and inject control functions into the main loop. The following snake game provides a clear visualization of this process start to finish.
 ```lua
