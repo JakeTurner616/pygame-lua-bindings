@@ -1,2 +1,5 @@
 pygame
 lupa
+PIL
+luadata
+numpy
