@@ -39,6 +39,9 @@ from pygame_functions.events import (
 )
 from pygame_functions.display import set_display_mode_lua, init_display, quit_display, get_display_init, set_display_mode, get_display_surface, flip_display, update_display, get_display_driver, get_display_info, get_wm_info, get_desktop_sizes, list_modes, mode_ok, gl_get_attribute, gl_set_attribute, get_display_active, iconify_display, toggle_fullscreen_display, set_gamma_display, Surface, set_gamma_ramp_display, set_display_icon, set_display_caption, get_display_caption, set_display_palette, get_num_displays, get_window_size, get_allow_screensaver, set_allow_screensaver
 
+vebose = False
+
+
 # Initialize Lua
 lua = LuaRuntime(unpack_returned_tuples=True)
 
@@ -77,8 +80,9 @@ registered_functions = {
 def register_function(name, func):
     if name in registered_functions:
         registered_functions[name] = func
+        print(f"Registered function '{name}' with function {func}")
     else:
-        print(f"Function {name} is not recognized for registration.")
+        print(f"Function '{name}' is not recognized for registration.")
 
 lua.globals().register_function = register_function
 
@@ -424,23 +428,28 @@ def handle_events():
                     'key': event.key,
                     'mod': event.mod,
                 }
+            print(f"Handling event '{event_type}' with data {event_data}")
             handler(event_data)
-
 # Main loop to handle Pygame events and execute drawing commands
 def main_loop():
     set_event_handling_active(True)
     clock = pygame.time.Clock()
     while main_loop_running:
-        
         handle_events()
         if registered_functions["process_events"]:
+            if vebose:
+                print("Calling 'process_events' function")
             registered_functions["process_events"]()
         if registered_functions["update_position"]:
+            if vebose:
+                print("Calling 'update_position' function")
             registered_functions["update_position"]()
         if registered_functions["draw"]:
+            if vebose:
+                print("Calling 'draw' function")
             registered_functions["draw"]()
         flip_display()
-        # Cap the frame rate to 14 fps
+        # Cap the frame rate to 30 fps
         clock.tick(30)
 
     pygame.quit()

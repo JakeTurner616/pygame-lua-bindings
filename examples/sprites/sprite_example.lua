@@ -1,32 +1,122 @@
--- Set the display mode
-local screen = set_display_mode_lua(800, 600)
-print("typeof screen: " .. type(screen))
+-- Simple Chess Game in Lua with Pygame using PNG Assets
 
--- Create a new sprite
-local my_sprite = Sprite()
-my_sprite:set_rect(50, 50, 50, 50)  -- Set the position and size of the sprite
-my_sprite:set_image(50, 50, {255, 0, 0})  -- Set the image to a 50x50 red square
+-- Constants
+local TILE_SIZE = 80
+local SCREEN_SIZE = 8 * TILE_SIZE
 
--- Create a sprite group and add the sprite to it
-local my_group = Group()
-my_group:add(my_sprite)
+local PIECE_IMAGES = {
+    ["w-pawn"] = "/chess/w-pawn.png",
+    ["w-rook"] = "/chess/w-rook.png",
+    ["w-knight"] = "/chess/w-knight.png",
+    ["w-bishop"] = "/chess/w-bishop.png",
+    ["w-queen"] = "/chess/w-queen.png",
+    ["w-king"] = "/chess/w-king.png",
+    ["b-pawn"] = "/chess/b-pawn.png",
+    ["b-rook"] = "/chess/b-rook.png",
+    ["b-knight"] = "/chess/b-knight.png",
+    ["b-bishop"] = "/chess/b-bishop.png",
+    ["b-queen"] = "/chess/b-queen.png",
+    ["b-king"] = "/chess/b-king.png"
+}
 
--- Define a function to update the sprite position
-function update_position()
-    local rect = my_sprite:get_rect()
-    rect.x = rect.x + 1  -- Move the sprite to the right
-    if rect.x > 800 then  -- Reset position if it goes off-screen
-        rect.x = 0
+local PIECES = {
+    {"b-rook", "b-knight", "b-bishop", "b-queen", "b-king", "b-bishop", "b-knight", "b-rook"},
+    {"b-pawn", "b-pawn", "b-pawn", "b-pawn", "b-pawn", "b-pawn", "b-pawn", "b-pawn"},
+    {"", "", "", "", "", "", "", ""},
+    {"", "", "", "", "", "", "", ""},
+    {"", "", "", "", "", "", "", ""},
+    {"", "", "", "", "", "", "", ""},
+    {"w-pawn", "w-pawn", "w-pawn", "w-pawn", "w-pawn", "w-pawn", "w-pawn", "w-pawn"},
+    {"w-rook", "w-knight", "w-bishop", "w-queen", "w-king", "w-bishop", "w-knight", "w-rook"}
+}
+
+local selected = nil
+local turn = "white"  -- White goes first
+
+-- Utility function to check if a move is valid for a pawn
+local function is_valid_pawn_move(piece, from, to)
+    local direction = piece:sub(1, 1) == "w" and -1 or 1
+    local start_row = piece:sub(1, 1) == "w" and 7 or 2
+
+    -- Moving forward
+    if from.x == to.x and PIECES[to.y][to.x] == "" then
+        if from.y + direction == to.y then
+            return true
+        elseif from.y == start_row and from.y + 2 * direction == to.y and PIECES[from.y + direction][from.x] == "" then
+            return true
+        end
     end
-    my_sprite:set_rect(rect.x, rect.y, rect.width, rect.height)
+
+    -- Capturing diagonally
+    if math.abs(from.x - to.x) == 1 and from.y + direction == to.y and PIECES[to.y][to.x] ~= "" then
+        return true
+    end
+
+    return false
 end
 
--- Define a function to draw the sprite group
-function draw()
-    clear_canvas()  -- Clear the canvas before drawing
-    my_group:draw(screen)
+-- Function to check if a move is valid
+local function is_valid_move(piece, from, to)
+    if piece == "" then return false end
+
+    if piece:sub(3) == "pawn" then
+        return is_valid_pawn_move(piece, from, to)
+    end
+
+    -- Add more rules for other pieces (rook, knight, bishop, queen, king)
+    return true
 end
 
--- Register the update and draw functions
-register_function("update_position", update_position)
-register_function("draw", draw)
+-- Draw function
+local function draw_game()
+    clear_canvas()
+
+    -- Draw chessboard
+    for y = 1, 8 do
+        for x = 1, 8 do
+            local color = (x + y) % 2 == 0 and "#EEE" or "#555"
+            draw_rectangle((x - 1) * TILE_SIZE, (y - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE, color)
+            local piece = PIECES[y][x]
+            if piece ~= "" then
+                local image = PIECE_IMAGES[piece]
+                draw_image(image, (x - 1) * TILE_SIZE, (y - 1) * TILE_SIZE)
+            end
+        end
+    end
+
+    flip_display()
+end
+
+-- Event handling for mouse clicks
+local function on_mousebuttondown(event)
+    print("on_mousebuttondown called with event:", event)
+    local gx, gy = math.floor(event.pos[1] / TILE_SIZE) + 1, math.floor(event.pos[2] / TILE_SIZE) + 1
+    if selected then
+        local piece = PIECES[selected.y][selected.x]
+        if is_valid_move(piece, selected, {x = gx, y = gy}) then
+            PIECES[gy][gx] = PIECES[selected.y][selected.x]
+            PIECES[selected.y][selected.x] = ""
+            turn = turn == "white" and "black" or "white"
+        end
+        selected = nil
+    elseif PIECES[gy][gx] ~= "" then
+        if (turn == "white" and PIECES[gy][gx]:sub(1, 1) == "w") or (turn == "black" and PIECES[gy][gx]:sub(1, 1) == "b") then
+            selected = {x = gx, y = gy}
+        end
+    end
+end
+
+-- Process events (e.g., window close)
+local function process_events()
+    for _, e in ipairs(get_events()) do
+        if e.type == "QUIT" then
+            stop_main_loop()
+        end
+    end
+end
+
+-- Register functions and start the loop
+register_event_handler('on_mousebuttondown', on_mousebuttondown)
+register_function("process_events", process_events)
+register_function("draw", draw_game)
+start_main_loop()

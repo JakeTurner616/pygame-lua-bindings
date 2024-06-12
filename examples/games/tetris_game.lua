@@ -1,3 +1,11 @@
+--[[---------------------------------------------
+Tetris Game Implementation in Lua with Pygame
+
+This script implements a simple version of the classic Tetris game using lua with
+Pygame for graphics and event handling. The game includes surface level core mechanics such as piece movement,
+rotation, line clearing, and score tracking.
+-----------------------------------------------]]--
+
 -- Game constants
 local SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE = 300, 600, 30
 local GRID_WIDTH, GRID_HEIGHT = SCREEN_WIDTH / TILE_SIZE, SCREEN_HEIGHT / TILE_SIZE
@@ -13,13 +21,13 @@ local SHAPES = {
 }
 
 local COLORS = {
-    "#FF0000",  -- Red
-    "#00FF00",  -- Green
-    "#0000FF",  -- Blue
-    "#FFFF00",  -- Yellow
-    "#FF00FF",  -- Magenta
-    "#00FFFF",  -- Cyan
-    "#FFA500"   -- Orange
+    "#800080",  -- Purple (T piece)
+    "#00FF00",  -- Green (S piece)
+    "#FF0000",  -- Red (Z piece)
+    "#00FFFF",  -- Cyan (I piece)
+    "#FFA500",  -- Orange (L piece)
+    "#0000FF",  -- Blue (J piece)
+    "#FFFF00"   -- Yellow (O piece)
 }
 
 -- Initialize game state
@@ -54,49 +62,6 @@ local function get_next_piece()
     return table.remove(double_bag)
 end
 
-local current_piece = get_next_piece()
-current_piece.x = math.floor(GRID_WIDTH / 2) - 1
-current_piece.y = 0
-
-local next_piece = get_next_piece()
-next_piece.x = math.floor(GRID_WIDTH / 2) - 1
-next_piece.y = 0
-
-local game_speed = 3
-local speed_timer = 0
-local score = 0
-
-local function draw_grid()
-    for y = 1, GRID_HEIGHT do
-        for x = 1, GRID_WIDTH do
-            if grid[y][x] ~= 0 then
-                draw_rectangle((x - 1) * TILE_SIZE, (y - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE, grid[y][x])
-            end
-        end
-    end
-end
-
-local function draw_piece(piece, offsetX, offsetY)
-    for y = 1, #piece.shape do
-        for x = 1, #piece.shape[y] do
-            if piece.shape[y][x] ~= 0 then
-                draw_rectangle((piece.x + x - 1 + (offsetX or 0)) * TILE_SIZE, (piece.y + y - 1 + (offsetY or 0)) * TILE_SIZE, TILE_SIZE, TILE_SIZE, piece.color)
-            end
-        end
-    end
-end
-
-local function draw_game()
-    clear_canvas()
-    draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, "#FFFFFF", 1)  -- Outline the game area
-    draw_grid()
-    draw_piece(current_piece)
-    draw_text(10, 10, "Next piece:", "Arial", 20, "#FFFFFF")
-    draw_piece(next_piece, GRID_WIDTH + 1, 2)
-    draw_text(10, 50, "Score: " .. score, "Arial", 20, "#FFFFFF")
-    flip_display()
-end
-
 local function collides(piece, offsetX, offsetY)
     for y = 1, #piece.shape do
         for x = 1, #piece.shape[y] do
@@ -110,6 +75,60 @@ local function collides(piece, offsetX, offsetY)
         end
     end
     return false
+end
+
+local current_piece = get_next_piece()
+current_piece.x = math.floor(GRID_WIDTH / 2) - 1
+current_piece.y = 0
+
+local next_piece = get_next_piece()
+next_piece.x = math.floor(GRID_WIDTH / 2) - 1
+next_piece.y = 0
+
+local game_speed = 3
+local speed_timer = 0
+local score = 0
+local speed_drop = false
+
+local function draw_grid()
+    for y = 1, GRID_HEIGHT do
+        for x = 1, GRID_WIDTH do
+            if grid[y][x] ~= 0 then
+                draw_rectangle((x - 1) * TILE_SIZE, (y - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE, grid[y][x])
+            end
+        end
+    end
+end
+
+local function draw_piece(piece, offsetX, offsetY, color)
+    for y = 1, #piece.shape do
+        for x = 1, #piece.shape[y] do
+            if piece.shape[y][x] ~= 0 then
+                draw_rectangle((piece.x + x - 1 + (offsetX or 0)) * TILE_SIZE, (piece.y + y - 1 + (offsetY or 0)) * TILE_SIZE, TILE_SIZE, TILE_SIZE, color or piece.color)
+            end
+        end
+    end
+end
+
+local function get_ghost_piece(piece)
+    local ghost_piece = {shape = piece.shape, color = "#CCCCCC", x = piece.x, y = piece.y}
+    while not collides(ghost_piece, 0, 1) do
+        ghost_piece.y = ghost_piece.y + 1
+    end
+    return ghost_piece
+end
+
+local function draw_game()
+    clear_canvas()
+    draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, "#FFFFFF", 1)  -- Outline the game area
+    draw_grid()
+    local ghost_piece = get_ghost_piece(current_piece)
+    draw_piece(ghost_piece)
+    draw_piece(current_piece)
+    draw_text(10, 10, "Next piece:", "Arial", 20, "#FFFFFF")
+    draw_piece(next_piece, GRID_WIDTH + 1, 2)
+    draw_text(10, 50, "Score: " .. score, "Arial", 20, "#FFFFFF")
+    flip_display()
 end
 
 local function merge_piece(piece)
@@ -163,8 +182,9 @@ end
 
 local function update_game()
     speed_timer = speed_timer + 1
-    if speed_timer >= 30 / game_speed then
+    if speed_timer >= 30 / game_speed or speed_drop then
         speed_timer = 0
+        speed_drop = false
         if collides(current_piece, 0, 1) then
             merge_piece(current_piece)
             clear_lines()
@@ -204,7 +224,7 @@ register_event_handler('on_keydown', function(event)
     elseif event.key == K_SPACE then
         rotate_current_piece()
     elseif event.key == K_DOWN then
-        update_game()
+        speed_drop = true
     elseif event.key == K_PLUS or event.key == K_EQUALS then
         game_speed = game_speed + 1
     elseif event.key == K_MINUS then
